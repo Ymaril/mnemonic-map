@@ -7,6 +7,8 @@ import { MnemonicInput, type Mnemonic } from "./MnemonicInput"
 import { useCityGeocoding } from "./useCityGeocoding"
 import { getOffset, type GeoPoint } from "./offset"
 import { dequantizeOffset, quantizeOffset } from "./offsetQuantizer"
+import { quantizedOffsetToBitsMinimal } from "./quantizedOffsetBits"
+
 
 function App() {
   const [count, setCount] = useState(0)
@@ -25,12 +27,6 @@ function App() {
     loading: cityLoading,
     error: cityError,
   } = useCityGeocoding(city)
-
-  useEffect(() => {
-    if (cityCoords) {
-      setPoint({ lat: cityCoords.lat, lng: cityCoords.lon })
-    }
-  }, [cityCoords])
 
   const offset = useMemo(() => {
     if (!cityCoords || !point) return null
@@ -64,6 +60,11 @@ function App() {
 
   const dequantizedBearingDegStr =
     dequantizedOffset != null ? ((dequantizedOffset.bearingRad * 180) / Math.PI).toFixed(2) : null
+
+  const bits = useMemo(() => {
+    if (!quantizedOffset) return null
+    return quantizedOffsetToBitsMinimal(quantizedOffset)
+  }, [quantizedOffset])
 
   function handleMnemonicChange(next: Mnemonic | null) {
     setMnemonic(next)
@@ -115,6 +116,15 @@ function App() {
               <br />
               Азимут: {dequantizedBearingDegStr}°
             </p>
+            {bits && (
+              <p>
+                <b>Битовая последовательность:</b>
+                <br />
+                {bits.join("")}
+                <br />
+                Длина: {bits.length} бит
+              </p>
+            )}
           </>
         )}
 
