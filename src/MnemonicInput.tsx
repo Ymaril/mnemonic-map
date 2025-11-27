@@ -90,7 +90,12 @@ export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
 
   return (
     <input
-      style={{ width: "40rem", marginBottom: "2rem" }}
+      style={{
+        width: "100%",
+        maxWidth: "40rem",
+        minWidth: "280px",
+        marginBottom: "2rem"
+      }}
       value={inputValue}
       onChange={handleChange}
     />

@@ -31,7 +31,11 @@ export function Map({ value, onChange }: MapProps) {
     <MapContainer
       center={value}
       zoom={13}
-      style={{ height: "25rem", width: "50rem" }}
+      style={{
+        height: "25rem",
+        width: "100%",
+        maxWidth: "50rem"
+      }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
