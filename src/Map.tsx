@@ -1,4 +1,4 @@
-import { useEffect, memo } from "react"
+import { useEffect, memo } from "react";
 import {
   MapContainer,
   Marker,
@@ -6,13 +6,13 @@ import {
   TileLayer,
   useMap,
   useMapEvents,
-} from "react-leaflet"
-import type { LatLngLiteral } from "leaflet"
+} from "react-leaflet";
+import type { LatLngLiteral } from "leaflet";
 
 type MapProps = {
-  value: LatLngLiteral
-  onChange?: (value: LatLngLiteral) => void
-}
+  value: LatLngLiteral;
+  onChange?: (value: LatLngLiteral) => void;
+};
 
 export function Map({ value, onChange }: MapProps) {
   return (
@@ -26,7 +26,7 @@ export function Map({ value, onChange }: MapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <ClickHandler onClick={latlng => onChange?.(latlng)} />
+      <ClickHandler onClick={(latlng) => onChange?.(latlng)} />
 
       <Marker position={value}>
         <Popup>
@@ -36,33 +36,33 @@ export function Map({ value, onChange }: MapProps) {
 
       <CenterOnValue center={value} />
     </MapContainer>
-  )
+  );
 }
 
 type ClickHandlerProps = {
-  onClick: (latlng: LatLngLiteral) => void
-}
+  onClick: (latlng: LatLngLiteral) => void;
+};
 
 const ClickHandler = memo(({ onClick }: ClickHandlerProps) => {
   useMapEvents({
     click(e) {
-      onClick(e.latlng)
+      onClick(e.latlng);
     },
-  })
+  });
 
-  return null
-})
+  return null;
+});
 
 type CenterOnValueProps = {
-  center: LatLngLiteral
-}
+  center: LatLngLiteral;
+};
 
 const CenterOnValue = memo(({ center }: CenterOnValueProps) => {
-  const map = useMap()
+  const map = useMap();
 
   useEffect(() => {
-    map.setView(center)
-  }, [map, center.lat, center.lng])
+    map.setView(center);
+  }, [map, center.lat, center.lng]);
 
-  return null
-})
+  return null;
+});

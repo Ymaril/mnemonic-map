@@ -1,51 +1,51 @@
-import { wordsList } from "./wordsList"
-import type { ChangeEvent } from "react"
-import { useEffect, useMemo, useState } from "react"
+import { wordsList } from "./wordsList";
+import type { ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export type Mnemonic = {
-  full: string
-  city: string
-  words: string[]
-}
+  full: string;
+  city: string;
+  words: string[];
+};
 
 type MnemonicInputProps = {
-  value: Mnemonic | null
-  onChange: (value: Mnemonic | null) => void
-}
+  value: Mnemonic | null;
+  onChange: (value: Mnemonic | null) => void;
+};
 
 export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
   const dictionary = useMemo(
-    () => new Set(wordsList.map(w => w.toLowerCase())),
-    []
-  )
+    () => new Set(wordsList.map((w) => w.toLowerCase())),
+    [],
+  );
 
-  const [inputValue, setInputValue] = useState<string>(value?.full ?? "")
+  const [inputValue, setInputValue] = useState<string>(value?.full ?? "");
 
   useEffect(() => {
-    const next = value?.full ?? ""
-    setInputValue(prev => (prev === next ? prev : next))
-  }, [value])
+    const next = value?.full ?? "";
+    setInputValue((prev) => (prev === next ? prev : next));
+  }, [value]);
 
   function validateMnemonic(input: string) {
-    const parts = input.trim().split(/\s+/).filter(Boolean)
-    if (parts.length < 2) return null
-    const [city, ...words] = parts
-    if (!city) return null
-    const allValid = words.every(w => dictionary.has(w.toLowerCase()))
-    if (!allValid) return null
-    return { city, words }
+    const parts = input.trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return null;
+    const [city, ...words] = parts;
+    if (!city) return null;
+    const allValid = words.every((w) => dictionary.has(w.toLowerCase()));
+    if (!allValid) return null;
+    return { city, words };
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value
-    setInputValue(raw)
+    const raw = e.target.value;
+    setInputValue(raw);
 
-    const parsed = validateMnemonic(raw)
+    const parsed = validateMnemonic(raw);
     if (!parsed) {
-      return
+      return;
     }
 
-    const full = raw.trim()
+    const full = raw.trim();
 
     if (
       value &&
@@ -54,14 +54,14 @@ export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
       value.words.length === parsed.words.length &&
       value.words.every((w, i) => w === parsed.words[i])
     ) {
-      return
+      return;
     }
 
     onChange({
       full,
       city: parsed.city,
-      words: parsed.words
-    })
+      words: parsed.words,
+    });
   }
 
   return (
@@ -70,5 +70,5 @@ export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
       value={inputValue}
       onChange={handleChange}
     />
-  )
+  );
 }
