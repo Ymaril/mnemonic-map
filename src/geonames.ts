@@ -30,6 +30,8 @@ const GEONAMES_BASE_URL = "https://secure.geonames.org";
 const GEONAMES_USERNAME = import.meta.env.VITE_GEONAMES_USERNAME;
 const LANGUAGE = "en";
 
+const cityCoordinatesCache = new Map<string, CityCoordinates | null>();
+
 const defaultHeaders: HeadersInit = {
   "User-Agent": "your-app-name/0.1 (your-email@example.com)",
   "Accept-Language": LANGUAGE,
@@ -43,6 +45,12 @@ export async function getCityCoordinates(
   city: string,
   options?: RequestOptions,
 ): Promise<CityCoordinates | null> {
+  const cacheKey = city.trim().toLowerCase();
+  
+  if (cityCoordinatesCache.has(cacheKey)) {
+    return cityCoordinatesCache.get(cacheKey)!;
+  }
+
   const url = new URL("/searchJSON", GEONAMES_BASE_URL);
   url.searchParams.set("q", city);
   url.searchParams.set("maxRows", "1");
@@ -61,17 +69,20 @@ export async function getCityCoordinates(
 
   const data = (await res.json()) as GeoNamesSearchResponse;
 
-  if (!data.geonames || data.geonames.length === 0) {
-    return null;
+  let result: CityCoordinates | null = null;
+
+  if (data.geonames && data.geonames.length > 0) {
+    const place = data.geonames[0];
+    result = {
+      lat: parseFloat(place.lat),
+      lon: parseFloat(place.lng),
+      displayName: place.name,
+    };
   }
 
-  const place = data.geonames[0];
+  cityCoordinatesCache.set(cacheKey, result);
 
-  return {
-    lat: parseFloat(place.lat),
-    lon: parseFloat(place.lng),
-    displayName: place.name,
-  };
+  return result;
 }
 
 export async function getNearestCity(
