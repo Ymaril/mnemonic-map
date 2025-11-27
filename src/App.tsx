@@ -1,68 +1,54 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import "./App.css"
 import "leaflet/dist/leaflet.css"
 import { Map } from "./Map"
 import type { LatLngLiteral } from "leaflet"
 import { MnemonicInput, type Mnemonic } from "./MnemonicInput"
 import { useCityGeocoding } from "./useCityGeocoding"
-import { useNearestCity } from "./useNearestCity"
-
-type PointSource = "user" | "city" | null
+import { getOffset, type GeoPoint } from "./offset"
 
 function App() {
   const [count, setCount] = useState(0)
-  const [point, setPoint] = useState<LatLngLiteral>({ lat: 51.505, lng: -0.09 })
+
+  // Точка на карте — это всегда target
+  const [point, setPoint] = useState<LatLngLiteral>({
+    lat: 51.505,
+    lng: -0.09,
+  })
+
   const [mnemonic, setMnemonic] = useState<Mnemonic | null>(null)
-  const [pointSource, setPointSource] = useState<PointSource>(null)
 
   const city = mnemonic?.city ?? ""
 
+  // origin = координаты города
   const {
     coords: cityCoords,
     loading: cityLoading,
     error: cityError,
   } = useCityGeocoding(city)
 
-  const {
-    city: nearestCity,
-    loading: nearestLoading,
-    error: nearestError,
-  } = useNearestCity(pointSource === "user" ? point : null)
-
+  // Когда нашли координаты города — центрируем карту на город
   useEffect(() => {
     if (cityCoords) {
-      setPointSource("city")
       setPoint({ lat: cityCoords.lat, lng: cityCoords.lon })
     }
   }, [cityCoords])
 
-  useEffect(() => {
-    if (!nearestCity) return
-    if (!nearestCity.city) return
-    if (pointSource !== "user") return
+  // Считаем расстояние и угол: origin = cityCoords, target = point
+  const offset = useMemo(() => {
+    if (!cityCoords || !point) return null
 
-    setMnemonic(prev => {
-      if (!prev) {
-        return {
-          full: nearestCity.city,
-          city: nearestCity.city,
-          words: [],
-        }
-      }
+    const origin: GeoPoint = { lat: cityCoords.lat, lon: cityCoords.lon }
+    const target: GeoPoint = { lat: point.lat, lon: point.lng }
 
-      if (prev.city === nearestCity.city) {
-        return prev
-      }
+    return getOffset(origin, target)
+  }, [cityCoords, point])
 
-      const full = [nearestCity.city, ...prev.words].join(" ").trim()
+  const distanceStr =
+    offset != null ? offset.distanceM.toFixed(1) : null
 
-      return {
-        full,
-        city: nearestCity.city,
-        words: prev.words,
-      }
-    })
-  }, [nearestCity, pointSource])
+  const bearingDegStr =
+    offset != null ? ((offset.bearingRad * 180) / Math.PI).toFixed(2) : null
 
   function handleMnemonicChange(next: Mnemonic | null) {
     setMnemonic(next)
@@ -76,13 +62,14 @@ function App() {
   }
 
   function handleMapChange(p: LatLngLiteral) {
-    setPointSource("user")
+    // Теперь карта влияет только на target-точку, mnemonic не трогаем
     setPoint(p)
   }
 
   return (
     <>
       <h1>Mnemonic Map</h1>
+
       <MnemonicInput value={mnemonic} onChange={handleMnemonicChange} />
 
       <div>
@@ -90,22 +77,21 @@ function App() {
         {cityError && <p style={{ color: "red" }}>{cityError}</p>}
         {cityCoords && !cityError && (
           <p>
-            Город: {cityCoords.displayName} — lat={cityCoords.lat.toFixed(6)}, lon=
-            {cityCoords.lon.toFixed(6)}
+            Город (origin): {cityCoords.displayName} — lat=
+            {cityCoords.lat.toFixed(6)}, lon={cityCoords.lon.toFixed(6)}
           </p>
         )}
       </div>
 
       <div>
-        {nearestLoading && pointSource === "user" && (
-          <p>Определяем ближайший город по клику…</p>
+        {offset && (
+          <p>
+            Расстояние от города до точки (target): {distanceStr} м
+            <br />
+            Азимут (от севера по часовой): {bearingDegStr}°
+          </p>
         )}
-        {nearestError && pointSource === "user" && (
-          <p style={{ color: "red" }}>{nearestError}</p>
-        )}
-        {nearestCity && nearestCity.city && pointSource === "user" && (
-          <p>Ближайший город к точке: {nearestCity.city}</p>
-        )}
+        {!offset && <p>Укажи город, а затем кликни на карту для точки.</p>}
       </div>
 
       <div>

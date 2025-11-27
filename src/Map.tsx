@@ -32,7 +32,6 @@ export function Map({ value, onChange }: MapProps) {
     <MapContainer
       center={initialCenter.current}
       zoom={13}
-      scrollWheelZoom={false}
       style={{ height: "25rem", width: "50rem" }}
     >
       <TileLayer
