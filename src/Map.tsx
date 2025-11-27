@@ -1,36 +1,23 @@
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, memo } from "react"
 import {
   MapContainer,
   Marker,
   Popup,
   TileLayer,
+  useMap,
   useMapEvents,
-} from "react-leaflet";
-import type { LatLngLiteral } from "leaflet";
+} from "react-leaflet"
+import type { LatLngLiteral } from "leaflet"
 
 type MapProps = {
-  value: LatLngLiteral;
-  onChange?: (value: LatLngLiteral) => void;
-};
+  value: LatLngLiteral
+  onChange?: (value: LatLngLiteral) => void
+}
 
 export function Map({ value, onChange }: MapProps) {
-  const initialCenter = useRef<LatLngLiteral>(value);
-  const [markerPos, setMarkerPos] = useState<LatLngLiteral>(value);
-
-  useEffect(() => {
-    if (value.lat !== markerPos.lat || value.lng !== markerPos.lng) {
-      setMarkerPos(value);
-    }
-  }, [value, markerPos.lat, markerPos.lng]);
-
-  const handleClick = (latlng: LatLngLiteral) => {
-    setMarkerPos(latlng);
-    onChange?.(latlng);
-  };
-
   return (
     <MapContainer
-      center={initialCenter.current}
+      center={value}
       zoom={13}
       style={{ height: "25rem", width: "50rem" }}
     >
@@ -39,27 +26,43 @@ export function Map({ value, onChange }: MapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <ClickHandler onClick={handleClick} />
+      <ClickHandler onClick={latlng => onChange?.(latlng)} />
 
-      <Marker position={markerPos}>
+      <Marker position={value}>
         <Popup>
           A pretty CSS3 popup. <br /> Easily customizable.
         </Popup>
       </Marker>
+
+      <CenterOnValue center={value} />
     </MapContainer>
-  );
+  )
 }
 
 type ClickHandlerProps = {
-  onClick: (latlng: LatLngLiteral) => void;
-};
+  onClick: (latlng: LatLngLiteral) => void
+}
 
 const ClickHandler = memo(({ onClick }: ClickHandlerProps) => {
   useMapEvents({
     click(e) {
-      onClick(e.latlng);
+      onClick(e.latlng)
     },
-  });
+  })
 
-  return null;
-});
+  return null
+})
+
+type CenterOnValueProps = {
+  center: LatLngLiteral
+}
+
+const CenterOnValue = memo(({ center }: CenterOnValueProps) => {
+  const map = useMap()
+
+  useEffect(() => {
+    map.setView(center)
+  }, [map, center.lat, center.lng])
+
+  return null
+})
