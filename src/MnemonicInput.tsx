@@ -1,18 +1,30 @@
 import { wordsList } from "./wordsList"
 import type { ChangeEvent } from "react"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 
-type MnemonicInputProps = {
-  value: string
-  onChange: (value: string) => void
-  onValidChange?: (value: string, city: string, words: string[]) => void
+export type Mnemonic = {
+  full: string
+  city: string
+  words: string[]
 }
 
-export function MnemonicInput({ value, onChange, onValidChange }: MnemonicInputProps) {
+type MnemonicInputProps = {
+  value: Mnemonic | null
+  onChange: (value: Mnemonic | null) => void
+}
+
+export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
   const dictionary = useMemo(
     () => new Set(wordsList.map(w => w.toLowerCase())),
     []
   )
+
+  const [inputValue, setInputValue] = useState<string>(value?.full ?? "")
+
+  useEffect(() => {
+    const next = value?.full ?? ""
+    setInputValue(prev => (prev === next ? prev : next))
+  }, [value])
 
   function validateMnemonic(input: string) {
     const parts = input.trim().split(/\s+/).filter(Boolean)
@@ -25,20 +37,37 @@ export function MnemonicInput({ value, onChange, onValidChange }: MnemonicInputP
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    onChange(e.target.value)
-  }
+    const raw = e.target.value
+    setInputValue(raw)
 
-  useEffect(() => {
-    if (!onValidChange) return
-    const result = validateMnemonic(value)
-    if (!result) return
-    onValidChange(value, result.city, result.words)
-  }, [value, onValidChange])
+    const parsed = validateMnemonic(raw)
+    if (!parsed) {
+      return
+    }
+
+    const full = raw.trim()
+
+    if (
+      value &&
+      value.full === full &&
+      value.city === parsed.city &&
+      value.words.length === parsed.words.length &&
+      value.words.every((w, i) => w === parsed.words[i])
+    ) {
+      return
+    }
+
+    onChange({
+      full,
+      city: parsed.city,
+      words: parsed.words
+    })
+  }
 
   return (
     <input
       style={{ width: "40rem", marginBottom: "2rem" }}
-      value={value}
+      value={inputValue}
       onChange={handleChange}
     />
   )
