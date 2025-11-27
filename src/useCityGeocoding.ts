@@ -49,7 +49,7 @@ export function useCityGeocoding(city: string): CityGeocodingState {
             setState({
               coords: null,
               loading: false,
-              error: `Город "${trimmed}" не найден`,
+              error: `City "${trimmed}" not found`,
             });
             return;
           }
@@ -65,7 +65,7 @@ export function useCityGeocoding(city: string): CityGeocodingState {
           setState({
             coords: null,
             loading: false,
-            error: "Ошибка при запросе координат",
+            error: "Error fetching coordinates",
           });
         });
     }, 500);

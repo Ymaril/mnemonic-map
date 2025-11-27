@@ -49,7 +49,7 @@ export function useNearestCity(point: LatLngLiteral | null): NearestCityState {
             setState({
               city: null,
               loading: false,
-              error: "Город по этим координатам не найден",
+              error: "City not found for these coordinates",
             });
             return;
           }
@@ -65,7 +65,7 @@ export function useNearestCity(point: LatLngLiteral | null): NearestCityState {
           setState({
             city: null,
             loading: false,
-            error: "Ошибка при обратном геокодинге",
+            error: "Error during reverse geocoding",
           });
         });
     }, 500);

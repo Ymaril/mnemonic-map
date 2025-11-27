@@ -92,7 +92,7 @@ function App() {
 
       <MnemonicInput value={mnemonic} onChange={handleMnemonicChange} />
 
-      {cityLoading && <p>Ищем координаты города…</p>}
+      {cityLoading && <p>Searching for city coordinates…</p>}
       {cityError && <p style={{ color: "red" }}>{cityError}</p>}
 
       <Map value={mapPoint} onChange={handleMapChange} />

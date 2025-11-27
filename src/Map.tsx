@@ -10,7 +10,6 @@ import {
 import type { LatLngLiteral } from "leaflet";
 import L from "leaflet";
 
-// Fix for default markers in production
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
