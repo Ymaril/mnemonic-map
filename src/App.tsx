@@ -6,11 +6,11 @@ import type { LatLngLiteral } from "leaflet"
 import { MnemonicInput, type Mnemonic } from "./MnemonicInput"
 import { useCityGeocoding } from "./useCityGeocoding"
 import { getOffset, type GeoPoint } from "./offset"
+import { dequantizeOffset, quantizeOffset } from "./offsetQuantizer"
 
 function App() {
   const [count, setCount] = useState(0)
 
-  // Точка на карте — это всегда target
   const [point, setPoint] = useState<LatLngLiteral>({
     lat: 51.505,
     lng: -0.09,
@@ -20,21 +20,18 @@ function App() {
 
   const city = mnemonic?.city ?? ""
 
-  // origin = координаты города
   const {
     coords: cityCoords,
     loading: cityLoading,
     error: cityError,
   } = useCityGeocoding(city)
 
-  // Когда нашли координаты города — центрируем карту на город
   useEffect(() => {
     if (cityCoords) {
       setPoint({ lat: cityCoords.lat, lng: cityCoords.lon })
     }
   }, [cityCoords])
 
-  // Считаем расстояние и угол: origin = cityCoords, target = point
   const offset = useMemo(() => {
     if (!cityCoords || !point) return null
 
@@ -44,11 +41,29 @@ function App() {
     return getOffset(origin, target)
   }, [cityCoords, point])
 
+  const quantizedOffset = useMemo(() => {
+    if (!offset) return null;
+
+    return quantizeOffset(offset)
+  }, [offset])
+
+  const dequantizedOffset = useMemo(() => {
+    if (!quantizedOffset) return null;
+
+    return dequantizeOffset(quantizedOffset);
+  }, [quantizedOffset]);
+
   const distanceStr =
     offset != null ? offset.distanceM.toFixed(1) : null
 
   const bearingDegStr =
     offset != null ? ((offset.bearingRad * 180) / Math.PI).toFixed(2) : null
+
+  const dequantizedDistanceStr =
+    dequantizedOffset != null ? dequantizedOffset.distanceM.toFixed(1) : null
+
+  const dequantizedBearingDegStr =
+    dequantizedOffset != null ? ((dequantizedOffset.bearingRad * 180) / Math.PI).toFixed(2) : null
 
   function handleMnemonicChange(next: Mnemonic | null) {
     setMnemonic(next)
@@ -62,7 +77,6 @@ function App() {
   }
 
   function handleMapChange(p: LatLngLiteral) {
-    // Теперь карта влияет только на target-точку, mnemonic не трогаем
     setPoint(p)
   }
 
@@ -85,14 +99,28 @@ function App() {
 
       <div>
         {offset && (
-          <p>
-            Расстояние от города до точки (target): {distanceStr} м
-            <br />
-            Азимут (от севера по часовой): {bearingDegStr}°
-          </p>
+          <>
+            <p>
+              <b>Исходные данные:</b>
+              <br />
+              Расстояние: {distanceStr} м
+              <br />
+              Азимут: {bearingDegStr}°
+            </p>
+
+            <p>
+              <b>Деквантизованные данные</b>
+              <br />
+              Расстояние: {dequantizedDistanceStr} м
+              <br />
+              Азимут: {dequantizedBearingDegStr}°
+            </p>
+          </>
         )}
+
         {!offset && <p>Укажи город, а затем кликни на карту для точки.</p>}
       </div>
+
 
       <div>
         <Map value={point} onChange={handleMapChange} />
