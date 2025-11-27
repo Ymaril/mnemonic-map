@@ -28,12 +28,36 @@ export function MnemonicInput({ value, onChange }: MnemonicInputProps) {
 
   function validateMnemonic(input: string) {
     const parts = input.trim().split(/\s+/).filter(Boolean);
-    if (parts.length < 2) return null;
-    const [city, ...words] = parts;
-    if (!city) return null;
-    const allValid = words.every((w) => dictionary.has(w.toLowerCase()));
-    if (!allValid) return null;
-    return { city, words };
+    if (parts.length === 0) return null;
+
+    const cityParts: string[] = [];
+    const mnemonicWords: string[] = [];
+
+    let mnemonicStarted = false;
+
+    for (const part of parts) {
+      const isMnemonic = dictionary.has(part.toLowerCase());
+
+      if (!mnemonicStarted) {
+        if (isMnemonic) {
+          if (cityParts.length === 0) return null;
+          mnemonicStarted = true;
+          mnemonicWords.push(part);
+        } else {
+          cityParts.push(part);
+        }
+      } else {
+        if (!isMnemonic) {
+          return null;
+        }
+        mnemonicWords.push(part);
+      }
+    }
+
+    if (cityParts.length === 0) return null;
+
+    const city = cityParts.join(" ");
+    return { city, words: mnemonicWords };
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {

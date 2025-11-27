@@ -35,9 +35,16 @@ function App() {
   } = useCityGeocoding(city);
 
   const decodedPoint = useMemo(() => {
-    if (!cityCoords || !mnemonic || mnemonic.words.length === 0) return null;
+    if (!cityCoords || !mnemonic) return null;
 
     const origin: GeoPoint = { lat: cityCoords.lat, lon: cityCoords.lon };
+
+    if (mnemonic.words.length === 0) {
+      const nearbyLat = origin.lat + 0.01;
+      const nearbyLon = origin.lon + 0.01;
+
+      return { lat: nearbyLat, lng: nearbyLon } satisfies LatLngLiteral;
+    }
 
     const bits = bip39WordsToBits(mnemonic.words);
     const q = bitsToQuantizedOffset(bits);
