@@ -24,6 +24,19 @@ function pushFixedBits(value: number, bitCount: number, out: Bit[]) {
   }
 }
 
+function readIntFromBits(
+  bits: readonly Bit[],
+  start: number,
+  length: number,
+): number {
+  let value = 0
+  const end = start + length
+  for (let i = start; i < end; i++) {
+    value = (value << 1) | bits[i]
+  }
+  return value
+}
+
 export function quantizedOffsetToBitsMinimal(q: QuantizedOffset): Bit[] {
   const { distanceIndex, angleIndex } = q
 
@@ -46,4 +59,40 @@ export function quantizedOffsetToBitsMinimal(q: QuantizedOffset): Bit[] {
   pushFixedBits(angleIndex, angleBitsCount, bits)
 
   return bits
+}
+
+export function bitsToQuantizedOffset(bits: readonly Bit[]): QuantizedOffset {
+  const L = bits.length
+  if (L < 4) {
+    throw new Error("Bitstream too short for QuantizedOffset")
+  }
+
+  const d = L % 2 === 0 ? 2 : 3
+
+  const distanceBitsLen = (L - d) / 2
+  const angleBitsLen = distanceBitsLen + d
+
+  if (!Number.isInteger(distanceBitsLen) || distanceBitsLen <= 0) {
+    throw new Error("Invalid bit-length split for QuantizedOffset")
+  }
+
+  const distanceIndex = readIntFromBits(bits, 0, distanceBitsLen)
+  const angleIndex = readIntFromBits(bits, distanceBitsLen, angleBitsLen)
+
+  if (distanceIndex <= 0) {
+    throw new Error("Decoded distanceIndex must be > 0")
+  }
+  if (angleIndex < 0) {
+    throw new Error("Decoded angleIndex must be >= 0")
+  }
+
+  const distanceM = distanceIndex * DISTANCE_STEP_M
+  const circumference = 2 * Math.PI * distanceM
+  const angleSteps = Math.max(1, Math.round(circumference / ARC_STEP_M))
+
+  if (angleIndex >= angleSteps) {
+    throw new Error("Decoded angleIndex is out of range for this distanceIndex")
+  }
+
+  return { distanceIndex, angleIndex }
 }

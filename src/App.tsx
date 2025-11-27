@@ -7,7 +7,7 @@ import { MnemonicInput, type Mnemonic } from "./MnemonicInput"
 import { useCityGeocoding } from "./useCityGeocoding"
 import { getOffset, type GeoPoint } from "./offset"
 import { dequantizeOffset, quantizeOffset } from "./offsetQuantizer"
-import { quantizedOffsetToBitsMinimal } from "./quantizedOffsetBits"
+import { bitsToQuantizedOffset, quantizedOffsetToBitsMinimal } from "./quantizedOffsetBits"
 
 
 function App() {
@@ -37,17 +37,30 @@ function App() {
     return getOffset(origin, target)
   }, [cityCoords, point])
 
+
   const quantizedOffset = useMemo(() => {
     if (!offset) return null;
 
     return quantizeOffset(offset)
   }, [offset])
+  
+  const bits = useMemo(() => {
+    if (!quantizedOffset) return null
+    return quantizedOffsetToBitsMinimal(quantizedOffset)
+  }, [quantizedOffset])
+
+  
+  const quantizedOffsetFromBits = useMemo(() => {
+    if (!bits) return null
+
+    return bitsToQuantizedOffset(bits)
+  }, [bits])
 
   const dequantizedOffset = useMemo(() => {
-    if (!quantizedOffset) return null;
+    if (!quantizedOffsetFromBits) return null;
 
-    return dequantizeOffset(quantizedOffset);
-  }, [quantizedOffset]);
+    return dequantizeOffset(quantizedOffsetFromBits);
+  }, [quantizedOffsetFromBits]);
 
   const distanceStr =
     offset != null ? offset.distanceM.toFixed(1) : null
@@ -61,10 +74,6 @@ function App() {
   const dequantizedBearingDegStr =
     dequantizedOffset != null ? ((dequantizedOffset.bearingRad * 180) / Math.PI).toFixed(2) : null
 
-  const bits = useMemo(() => {
-    if (!quantizedOffset) return null
-    return quantizedOffsetToBitsMinimal(quantizedOffset)
-  }, [quantizedOffset])
 
   function handleMnemonicChange(next: Mnemonic | null) {
     setMnemonic(next)
