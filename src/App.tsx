@@ -34,24 +34,34 @@ function App() {
     error: cityError,
   } = useCityGeocoding(city);
 
-  const decodedPoint = useMemo(() => {
-    if (!cityCoords || !mnemonic) return null;
+  const { decodedPoint, decodeError } = useMemo(() => {
+    if (!cityCoords || !mnemonic) {
+      return { decodedPoint: null as LatLngLiteral | null, decodeError: null as string | null };
+    }
 
     const origin: GeoPoint = { lat: cityCoords.lat, lon: cityCoords.lon };
 
     if (mnemonic.words.length === 0) {
       const nearbyLat = origin.lat + 0.01;
       const nearbyLon = origin.lon + 0.01;
-
-      return { lat: nearbyLat, lng: nearbyLon } satisfies LatLngLiteral;
+      const point: LatLngLiteral = { lat: nearbyLat, lng: nearbyLon };
+      return { decodedPoint: point, decodeError: null };
     }
 
-    const bits = bip39WordsToBits(mnemonic.words);
-    const q = bitsToQuantizedOffset(bits);
-    const offset = dequantizeOffset(q);
-    const p = moveFrom(origin, offset);
-
-    return { lat: p.lat, lng: p.lon } satisfies LatLngLiteral;
+    try {
+      const bits = bip39WordsToBits(mnemonic.words);
+      const q = bitsToQuantizedOffset(bits);
+      const offset = dequantizeOffset(q);
+      const p = moveFrom(origin, offset);
+      const point: LatLngLiteral = { lat: p.lat, lng: p.lon };
+      return { decodedPoint: point, decodeError: null };
+    } catch (e) {
+      const message =
+        e instanceof Error && e.message
+          ? e.message
+          : "Invalid mnemonic phrase";
+      return { decodedPoint: null as LatLngLiteral | null, decodeError: message };
+    }
   }, [cityCoords, mnemonic]);
 
   const mapPoint: LatLngLiteral = decodedPoint ?? DEFAULT_POINT;
@@ -101,6 +111,7 @@ function App() {
 
       {cityLoading && <p>Searching for city coordinates…</p>}
       {cityError && <p style={{ color: "red" }}>{cityError}</p>}
+      {decodeError && <p style={{ color: "red" }}>{decodeError}</p>}
 
       <Map value={mapPoint} onChange={handleMapChange} />
     </>
