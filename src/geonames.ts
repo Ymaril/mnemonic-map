@@ -28,14 +28,8 @@ export type GeoNamesSearchResponse = {
 
 const GEONAMES_BASE_URL = "https://secure.geonames.org";
 const GEONAMES_USERNAME = import.meta.env.VITE_GEONAMES_USERNAME;
-const LANGUAGE = "en";
 
 const cityCoordinatesCache = new Map<string, CityCoordinates | null>();
-
-const defaultHeaders: HeadersInit = {
-  "User-Agent": "your-app-name/0.1 (your-email@example.com)",
-  "Accept-Language": LANGUAGE,
-};
 
 type RequestOptions = {
   signal?: AbortSignal;
@@ -55,11 +49,10 @@ export async function getCityCoordinates(
   url.searchParams.set("q", city);
   url.searchParams.set("maxRows", "1");
   url.searchParams.set("featureClass", "P");
-  url.searchParams.set("lang", LANGUAGE);
+  url.searchParams.set("lang", "en");
   url.searchParams.set("username", GEONAMES_USERNAME);
 
   const res = await fetch(url.toString(), {
-    headers: defaultHeaders,
     signal: options?.signal,
   });
 
@@ -95,11 +88,10 @@ export async function getNearestCity(
   url.searchParams.set("lng", String(lon));
   url.searchParams.set("maxRows", "1");
   url.searchParams.set("cities", "cities5000");
-  url.searchParams.set("lang", LANGUAGE);
+  url.searchParams.set("lang", "en");
   url.searchParams.set("username", GEONAMES_USERNAME);
 
   const res = await fetch(url.toString(), {
-    headers: defaultHeaders,
     signal: options?.signal,
   });
 
